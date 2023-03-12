@@ -39,7 +39,7 @@ fn setup(
         transform: Transform::from_xyz(0.0, 1.0, 0.0),
         material: materials.add(ToonMaterial {
             color: Color::rgb(0.1, 0.1, 0.6),
-            glossiness: 20.0,
+            glossiness: 5.0,
             ..default()
         }),
         ..default()
@@ -68,7 +68,6 @@ fn setup(
 
     commands.spawn(PointLightBundle {
         point_light: PointLight {
-            intensity: 9000.0,
             range: 100.0,
             shadows_enabled: true,
             ..default()
