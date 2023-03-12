@@ -28,6 +28,7 @@ fn setup(
         material: materials.add(ToonMaterial {
             color: Color::rgb(0.6, 0.1, 0.1),
             glossiness: 1.0,
+            ..default()
         }),
         ..default()
     });
@@ -38,6 +39,7 @@ fn setup(
         material: materials.add(ToonMaterial {
             color: Color::rgb(0.1, 0.1, 0.6),
             glossiness: 20.0,
+            ..default()
         }),
         ..default()
     });
@@ -48,6 +50,7 @@ fn setup(
         material: materials.add(ToonMaterial {
             color: Color::rgb(0.1, 0.6, 0.1),
             glossiness: 5.0,
+            ..default()
         }),
         ..default()
     });
@@ -89,6 +92,8 @@ pub struct ToonMaterial {
     color: Color,
     #[uniform(0)]
     glossiness: f32,
+    #[uniform(0)]
+    receive_shadows: u32,
 }
 
 impl Material for ToonMaterial {
@@ -102,6 +107,7 @@ impl Default for ToonMaterial {
         Self {
             color: Color::PINK,
             glossiness: 0.0,
+            receive_shadows: 1,
         }
     }
 }

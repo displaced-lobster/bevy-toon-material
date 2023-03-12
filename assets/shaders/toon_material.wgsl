@@ -13,6 +13,7 @@
 struct ToonMaterial {
     color: vec4<f32>,
     glossiness: f32,
+    receive_shadows: u32,
 };
 
 @group(1) @binding(0)
@@ -46,7 +47,15 @@ fn fragment(in: FragmentInput) -> @location(0) vec4<f32> {
         let light_color = normalize((*light).color_inverse_square_range.rgb);
         let light_to_frag = normalize((*light).position_radius.xyz - in.world_position.xyz);
         let NdotL = saturate(dot(in.world_normal, light_to_frag));
-        let light_intensity = smoothstep(0.0, 0.01, NdotL);
+
+        var shadow = 1.0;
+
+        if ((toon.receive_shadows & 1u) != 0u
+            && (point_lights.data[light_id].flags & POINT_LIGHT_FLAGS_SHADOWS_ENABLED_BIT) != 0u) {
+            shadow = fetch_point_shadow(light_id, in.world_position, in.world_normal);
+        }
+
+        let light_intensity = smoothstep(0.0, 0.01, NdotL * shadow);
 
         // specular reflection
         let half_vector = normalize(light_to_frag + view_direction);
