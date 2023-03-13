@@ -1,10 +1,19 @@
 [package]
-name = "bevy-toon-material"
-version = "0.1.0"
+authors = [
+    "Richard Mills <me@richardmills.ca>",
+]
 edition = "2021"
+homepage = "https://github.com/displaced-lobster/bevy-toon-material"
+name = "bevy-toon-material"
+readme = "README.md"
+repository = "https://github.com/displaced-lobster/bevy-toon-material"
+version = "0.1.0"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+bevy = { version = "0.10", default-features = false, features = ["bevy_pbr", "bevy_render"] }
+
+[dev-dependencies]
 bevy = "0.10"
 bevy_spectator = "0.2"

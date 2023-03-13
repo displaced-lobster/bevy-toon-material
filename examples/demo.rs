@@ -1,9 +1,6 @@
-use bevy::{
-    prelude::*,
-    reflect::TypeUuid,
-    render::render_resource::{AsBindGroup, ShaderRef},
-};
+use bevy::prelude::*;
 use bevy_spectator::{Spectator, SpectatorPlugin};
+use bevy_toon_material::{ToonMaterial, ToonMaterialPlugin};
 
 fn main() {
     App::new()
@@ -12,7 +9,7 @@ fn main() {
             watch_for_changes: true,
             ..default()
         }))
-        .add_plugin(MaterialPlugin::<ToonMaterial>::default())
+        .add_plugin(ToonMaterialPlugin)
         .add_plugin(SpectatorPlugin)
         .add_startup_system(setup)
         .run();
@@ -83,31 +80,4 @@ fn setup(
         },
         Spectator,
     ));
-}
-
-#[derive(AsBindGroup, TypeUuid, Debug, Clone)]
-#[uuid = "81d93b11-4a94-4560-a75d-7b827ecd887f"]
-pub struct ToonMaterial {
-    #[uniform(0)]
-    color: Color,
-    #[uniform(0)]
-    glossiness: f32,
-    #[uniform(0)]
-    receive_shadows: u32,
-}
-
-impl Material for ToonMaterial {
-    fn fragment_shader() -> ShaderRef {
-        "shaders/toon_material.wgsl".into()
-    }
-}
-
-impl Default for ToonMaterial {
-    fn default() -> Self {
-        Self {
-            color: Color::PINK,
-            glossiness: 0.0,
-            receive_shadows: 1,
-        }
-    }
 }
