@@ -58,7 +58,7 @@ See the examples folder for more detail usage.
 ## Examples
 
 ```bash
-$ cargo run --examples demo
+$ cargo run --examples point_light_demo
 ```
 
 ## Roadmap
