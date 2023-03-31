@@ -27,8 +27,9 @@ struct FragmentInput {
 @fragment
 fn fragment(in: FragmentInput) -> @location(0) vec4<f32> {
     let is_orthographic = view.projection[3].w == 1.0;
-    let view_direction = normalize(view.world_position.xyz);
-    // let view_direction = calculate_view(in.world_position, is_orthographic);
+    let N = in.world_normal;
+    // let V = calculate_view(in.world_position, is_orthographic);
+    let V = normalize(view.world_position.xyz);
     let view_z = dot(vec4<f32>(
         view.inverse_view[0].z,
         view.inverse_view[1].z,
@@ -43,36 +44,47 @@ fn fragment(in: FragmentInput) -> @location(0) vec4<f32> {
     // Point lights
     for (var i: u32 = offset_and_counts[0]; i < offset_and_counts[0] + offset_and_counts[1]; i = i + 1u) {
         let light_id = get_light_id(i);
-        let light = &point_lights.data[light_id];
-        let light_color = normalize((*light).color_inverse_square_range.rgb);
-        let light_to_frag = normalize((*light).position_radius.xyz - in.world_position.xyz);
-        let NdotL = saturate(dot(in.world_normal, light_to_frag));
 
-        var shadow = 1.0;
-
-        if ((toon.receive_shadows & 1u) != 0u
-            && (point_lights.data[light_id].flags & POINT_LIGHT_FLAGS_SHADOWS_ENABLED_BIT) != 0u) {
-            shadow = fetch_point_shadow(light_id, in.world_position, in.world_normal);
-        }
-
-        let light_intensity = smoothstep(0.0, 0.01, NdotL * shadow);
-
-        // specular reflection
-        let half_vector = normalize(light_to_frag + view_direction);
-        let NdotH = saturate(dot(in.world_normal, half_vector));
-        let specular_intensity = pow(NdotH * light_intensity, 1000.0 / toon.glossiness);
-        let specular_intensity_smooth = smoothstep(0.05, 0.1, specular_intensity);
-
-        // Rim lighting
-        let rim_dot = 1.0 - dot(view_direction, in.world_normal);
-        let rim_amount = 0.6;
-        let rim_threshold = 0.2;
-        var rim_intensity = rim_dot * pow(NdotL, rim_threshold);
-
-        rim_intensity = smoothstep(rim_amount - 0.01, rim_amount + 0.01, rim_intensity);
-
-        direct_light += (light_intensity + specular_intensity_smooth + rim_intensity) * light_color;
+        direct_light += cel_point_light(light_id, in.world_position, N, V, (toon.receive_shadows & 1u) != 0u);
     }
 
     return vec4<f32>(toon.color.rgb * (lights.ambient_color.rgb + direct_light), toon.color.a);
+}
+
+fn cel_point_light(
+    light_id: u32,
+    world_position: vec4<f32>,
+    N: vec3<f32>,
+    V: vec3<f32>,
+    receive_shadow: bool
+) -> vec3<f32> {
+    let light = &point_lights.data[light_id];
+    let light_color = normalize((*light).color_inverse_square_range.rgb);
+    let light_to_frag = normalize((*light).position_radius.xyz - world_position.xyz);
+    let L = normalize(light_to_frag);
+    let NoL = saturate(dot(N, L));
+
+    var shadow = 1.0;
+
+    if (receive_shadow && (point_lights.data[light_id].flags & POINT_LIGHT_FLAGS_SHADOWS_ENABLED_BIT) != 0u) {
+        shadow = fetch_point_shadow(light_id, world_position, N);
+    }
+
+    let light_intensity = smoothstep(0.0, 0.01, NoL * shadow);
+
+    // specular reflection
+    let H = normalize(L + V);
+    let NoH = saturate(dot(N, H));
+    let specular_intensity = pow(NoH * light_intensity, 1000.0 / toon.glossiness);
+    let specular_intensity_smooth = smoothstep(0.05, 0.1, specular_intensity);
+
+    // Rim lighting
+    let rim_dot = 1.0 - dot(V, N);
+    let rim_amount = 0.6;
+    let rim_threshold = 0.2;
+    var rim_intensity = rim_dot * pow(NoL, rim_threshold);
+
+    rim_intensity = smoothstep(rim_amount - 0.01, rim_amount + 0.01, rim_intensity);
+
+    return (light_intensity + specular_intensity_smooth + rim_intensity) * light_color;
 }
